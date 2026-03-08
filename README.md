@@ -4,7 +4,37 @@ Ce guide détaille la mise en place d'un accès distant sécurisé vers une infr
 
 ---
 
-## Étape 1 : Configuration NAT sur la Box Opérateur
+## Étape 1 : Création du Serveur VPN (Via le Wizard)
+Utiliser l'assistant de configuration est la méthode la plus fiable pour générer les certificats nécessaires.
+
+1. Dans pfSense, allez dans **VPN > OpenVPN > Servers**.
+2. Cliquez sur le bouton **"Add"** pour lancer le Wizard.
+3. **Type de serveur :** Choisissez **"Local User Access"**.
+4. **Certificats :** Laissez le wizard créer une nouvelle CA (ex: *HomeLabCA*) et un nouveau certificat serveur (ex: *HomeLabVPNServer*).
+5. **Configuration réseau :**
+    * **Interface :** WAN.
+    * **Port :** (ex: `1120 UDP`).
+    * **Tunnel Network :** `10.8.0.0/24`.
+    * **Local Network(s) :** `192.168.10.0/24, 192.168.11.0/24` (Séparez vos VLANs par une virgule).
+6. **DNS :** Vous pouvez mettre l'IP de votre pfSense (`192.168.10.1`) et un DNS public (`8.8.8.8`).
+7. Terminez le wizard. Il créera automatiquement les règles de firewall nécessaires sur les interfaces WAN et OpenVPN.
+
+---
+
+## Étape 2 : Création de l'utilisateur
+Pour que votre client puisse s'authentifier, vous devez créer un compte utilisateur associé au serveur VPN.
+
+1. Allez dans **System > User Manager**.
+2. Cliquez sur **"+ Add"**.
+3. **Username :** Choisissez un nom (ex: *john-vpn*).
+4. **Password :** Définissez un mot de passe robuste.
+5. **Certificate :** Cochez la case **"Click to create a user certificate"**.
+6. **Descriptive Name :** Donnez un nom au certificat (ex: *Cert-John*).
+7. Cliquez sur **Save**. L'utilisateur est désormais prêt à utiliser le tunnel.
+
+---
+
+## Étape 3 : Configuration NAT sur la Box Opérateur
 L'objectif est de diriger tout le trafic VPN arrivant sur votre IP publique vers votre routeur pfSense.
 
 1. Accédez à l'interface de gestion de votre box (ex: `192.168.1.254`).
@@ -19,7 +49,7 @@ L'objectif est de diriger tout le trafic VPN arrivant sur votre IP publique vers
 
 ---
 
-## Étape 2 : Ouverture du Pare-feu pfSense (WAN)
+## Étape 4 : Ouverture du Pare-feu pfSense (WAN)
 Assurez-vous que pfSense accepte les connexions entrantes sur son interface WAN.
 
 1. Allez dans **Firewall > Rules > WAN**.
@@ -33,7 +63,7 @@ Assurez-vous que pfSense accepte les connexions entrantes sur son interface WAN.
 
 ---
 
-## Étape 3 : Autorisation des flux internes (VLANs)
+## Étape 5 : Autorisation des flux internes (VLANs)
 Pour que vos utilisateurs VPN puissent accéder à vos VLANs, il faut autoriser le trafic provenant du tunnel dans le pare-feu pfSense.
 
 1. Allez dans **Firewall > Rules > OpenVPN**.
@@ -44,14 +74,14 @@ Pour que vos utilisateurs VPN puissent accéder à vos VLANs, il faut autoriser 
 
 ---
 
-## Étape 4 : Exportation de la configuration client
+## Étape 6 : Exportation de la configuration client
 1. Allez dans **VPN > OpenVPN > Client Export**.
 2. Dans **Host Name Resolution**, sélectionnez "Other" et saisissez impérativement votre **IP publique**.
 3. Téléchargez le fichier `.ovpn` (format "Inline Config").
 
 ---
 
-## Étape 5 : Configuration sur Fedora (Client)
+## Étape 7 : Configuration sur Fedora (Client)
 L'utilisation de *NetworkManager* permet une intégration native.
 
 1. Allez dans **Paramètres > Réseau > VPN > Ajouter (+)**.
@@ -90,7 +120,7 @@ Une fois que c'est fini, vous allez voir ceci:
 
 ---
 
-## Étape 6 : Validation du test de connexion
+## Étape 8 : Validation du test de connexion
 Pour valider, testez impérativement depuis l'**extérieur** (partage de connexion 4G/5G).
 
 1. Activez le VPN. L'icône dans la barre des tâches doit devenir active.
